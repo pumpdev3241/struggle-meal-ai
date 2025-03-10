@@ -10,6 +10,10 @@ import { signOut, getCurrentUser } from '../../services/supabaseClient';
  * @param {Function} props.onLogoutSuccess - Function to call when logout is successful
  * @param {boolean} props.darkMode - Whether dark mode is enabled
  * @param {Function} props.onDarkModeToggle - Function to call when dark mode is toggled
+ * @param {string} props.activeTab - Currently active tab
+ * @param {Function} props.setActiveTab - Function to set active tab
+ * @param {boolean} props.hasRecipes - Whether recipes are available
+ * @param {boolean} props.hasSelectedRecipes - Whether recipes are selected
  * @returns {JSX.Element} - Navbar component
  */
 const Navbar = ({ 
@@ -17,7 +21,11 @@ const Navbar = ({
   onLoginClick, 
   onLogoutSuccess,
   darkMode,
-  onDarkModeToggle
+  onDarkModeToggle,
+  activeTab,
+  setActiveTab,
+  hasRecipes,
+  hasSelectedRecipes
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userEmail, setUserEmail] = useState('');
@@ -104,6 +112,32 @@ const Navbar = ({
           </a>
         </div>
         
+        <div className="navbar-menu">
+          {/* Main navigation */}
+          <div className="nav-links">
+            <button 
+              className={`nav-link ${activeTab === 'preferences' ? 'active' : ''}`}
+              onClick={() => setActiveTab('preferences')}
+            >
+              Home
+            </button>
+            <button 
+              className={`nav-link ${activeTab === 'recipes' ? 'active' : ''}`}
+              onClick={() => setActiveTab('recipes')}
+              disabled={!hasRecipes}
+            >
+              Recipes
+            </button>
+            <button 
+              className={`nav-link ${activeTab === 'shopping-list' ? 'active' : ''}`}
+              onClick={() => setActiveTab('shopping-list')}
+              disabled={!hasSelectedRecipes}
+            >
+              Shopping List
+            </button>
+          </div>
+        </div>
+        
         <div className="navbar-actions">
           {/* Dark mode toggle */}
           <button 
@@ -114,25 +148,18 @@ const Navbar = ({
             {darkMode ? '☀️' : '🌙'}
           </button>
           
-          {/* Desktop menu */}
-          <div className="desktop-menu">
-            <a href="/" className="nav-link">Home</a>
-            <a href="/recipes" className="nav-link">Recipes</a>
-            <a href="/shopping-list" className="nav-link">Shopping List</a>
-            
+          {/* User menu */}
+          <div className="user-section">
             {isLoggedIn ? (
-              <>
-                <a href="/favorites" className="nav-link">Favorites</a>
-                <div className="user-menu">
-                  <span className="user-email">{userEmail}</span>
-                  <button 
-                    className="logout-button"
-                    onClick={handleLogout}
-                  >
-                    Logout
-                  </button>
-                </div>
-              </>
+              <div className="user-menu">
+                <span className="user-email">{userEmail}</span>
+                <button 
+                  className="logout-button"
+                  onClick={handleLogout}
+                >
+                  Logout
+                </button>
+              </div>
             ) : (
               <button 
                 className="login-button"

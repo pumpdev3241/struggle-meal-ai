@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { saveUserPreferences, getUserPreferences } from '../../services/supabaseClient';
 
 /**
@@ -14,7 +14,7 @@ const PreferencesForm = ({ userId, onSubmit }) => {
     foodPreferences: '',
     dietaryRestrictions: '',
     skillLevel: 'beginner',
-    budget: 20,
+    budget: 25,
     pantryItems: []
   });
   const [pantryInput, setPantryInput] = useState('');
@@ -144,11 +144,26 @@ const PreferencesForm = ({ userId, onSubmit }) => {
   
   // Form item animation variants
   const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
+    hidden: { y: 30, opacity: 0 },
     visible: { 
       y: 0, 
       opacity: 1,
       transition: { type: 'spring', stiffness: 300, damping: 24 }
+    }
+  };
+  
+  // Pantry item animation variants
+  const pantryItemVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: { 
+      opacity: 1, 
+      scale: 1,
+      transition: { type: 'spring', stiffness: 500, damping: 30 }
+    },
+    exit: { 
+      opacity: 0, 
+      scale: 0.8, 
+      transition: { duration: 0.2 } 
     }
   };
   
@@ -157,142 +172,219 @@ const PreferencesForm = ({ userId, onSubmit }) => {
   }
   
   return (
-    <motion.form 
-      className="preferences-form"
-      onSubmit={handleSubmit}
-      variants={formVariants}
-      initial="hidden"
-      animate="visible"
+    <motion.div
+      className="preferences-form-container"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
     >
-      <h2>Your Meal Preferences</h2>
-      
-      {error && <div className="error-message">{error}</div>}
-      {success && <div className="success-message">Preferences saved successfully!</div>}
-      
-      <motion.div className="form-group" variants={itemVariants}>
-        <label htmlFor="foodPreferences">Food Preferences</label>
-        <input
-          type="text"
-          id="foodPreferences"
-          name="foodPreferences"
-          value={preferences.foodPreferences}
-          onChange={handleChange}
-          placeholder="e.g., spicy chicken, pasta, vegetarian"
-          disabled={loading}
-          required
-        />
-        <small>What kinds of food do you enjoy?</small>
-      </motion.div>
-      
-      <motion.div className="form-group" variants={itemVariants}>
-        <label htmlFor="dietaryRestrictions">Dietary Restrictions</label>
-        <input
-          type="text"
-          id="dietaryRestrictions"
-          name="dietaryRestrictions"
-          value={preferences.dietaryRestrictions}
-          onChange={handleChange}
-          placeholder="e.g., no dairy, gluten-free, vegan"
-          disabled={loading}
-        />
-        <small>Any foods you can't or don't eat?</small>
-      </motion.div>
-      
-      <motion.div className="form-group" variants={itemVariants}>
-        <label htmlFor="skillLevel">Cooking Skill Level</label>
-        <select
-          id="skillLevel"
-          name="skillLevel"
-          value={preferences.skillLevel}
-          onChange={handleChange}
-          disabled={loading}
+      <motion.form 
+        className="preferences-form"
+        onSubmit={handleSubmit}
+        variants={formVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.h2 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.5 }}
+          className="form-title"
         >
-          <option value="beginner">Beginner</option>
-          <option value="intermediate">Intermediate</option>
-          <option value="advanced">Advanced</option>
-        </select>
-        <small>How comfortable are you in the kitchen?</small>
-      </motion.div>
-      
-      <motion.div className="form-group" variants={itemVariants}>
-        <label htmlFor="budget">Weekly Budget (USD)</label>
-        <div className="budget-slider-container">
-          <input
-            type="range"
-            id="budget"
-            name="budget"
-            min="10"
-            max="100"
-            step="5"
-            value={preferences.budget}
-            onChange={handleChange}
-            disabled={loading}
-          />
-          <span className="budget-value">${preferences.budget}</span>
-        </div>
-        <small>How much can you spend on food per week?</small>
-      </motion.div>
-      
-      <motion.div className="form-group pantry-items-group" variants={itemVariants}>
-        <label>Pantry Items (Optional)</label>
-        <div className="pantry-input-container">
+          Your Meal Preferences
+        </motion.h2>
+        
+        {error && (
+          <motion.div 
+            className="error-message"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+          >
+            {error}
+          </motion.div>
+        )}
+        
+        {success && (
+          <motion.div 
+            className="success-message"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+          >
+            Preferences saved successfully!
+          </motion.div>
+        )}
+        
+        <motion.div className="form-group" variants={itemVariants}>
+          <label htmlFor="foodPreferences">Food Preferences</label>
           <input
             type="text"
-            value={pantryInput}
-            onChange={handlePantryInputChange}
-            placeholder="e.g., rice, soy sauce, olive oil"
+            id="foodPreferences"
+            name="foodPreferences"
+            value={preferences.foodPreferences}
+            onChange={handleChange}
+            placeholder="e.g., spicy chicken, pasta, vegetarian"
+            disabled={loading}
+            required
+          />
+          <small>What kinds of food do you enjoy?</small>
+        </motion.div>
+        
+        <motion.div className="form-group" variants={itemVariants}>
+          <label htmlFor="dietaryRestrictions">Dietary Restrictions</label>
+          <input
+            type="text"
+            id="dietaryRestrictions"
+            name="dietaryRestrictions"
+            value={preferences.dietaryRestrictions}
+            onChange={handleChange}
+            placeholder="e.g., no dairy, gluten-free, vegan"
             disabled={loading}
           />
-          <button
-            type="button"
-            onClick={addPantryItem}
-            disabled={!pantryInput.trim() || loading}
-            className="add-pantry-button"
-          >
-            Add
-          </button>
-        </div>
-        <small>What ingredients do you already have?</small>
+          <small>Any foods you can't or don't eat?</small>
+        </motion.div>
         
-        {preferences.pantryItems.length > 0 && (
-          <ul className="pantry-items-list">
-            {preferences.pantryItems.map((item, index) => (
-              <motion.li 
-                key={index}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 10 }}
-                className="pantry-item"
+        <motion.div className="form-group" variants={itemVariants}>
+          <label htmlFor="skillLevel">Cooking Skill Level</label>
+          <select
+            id="skillLevel"
+            name="skillLevel"
+            value={preferences.skillLevel}
+            onChange={handleChange}
+            disabled={loading}
+          >
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+          <small>How comfortable are you in the kitchen?</small>
+        </motion.div>
+        
+        <motion.div className="form-group budget-group" variants={itemVariants}>
+          <label htmlFor="budget">Weekly Budget (USD)</label>
+          <div className="budget-slider-container">
+            <input
+              type="range"
+              id="budget"
+              name="budget"
+              min="0"
+              max="50"
+              step="1"
+              value={preferences.budget}
+              onChange={handleChange}
+              disabled={loading}
+              className="budget-slider"
+            />
+            <motion.div 
+              className="budget-value-container"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              <motion.span 
+                className="budget-value"
+                key={preferences.budget}
+                initial={{ scale: 1.2, y: -10, color: 'var(--primary-light)' }}
+                animate={{ scale: 1, y: 0, color: 'var(--text-color)' }}
+                transition={{ type: "spring", stiffness: 500, damping: 15 }}
               >
-                <span>{item}</span>
-                <button
-                  type="button"
-                  onClick={() => removePantryItem(index)}
-                  disabled={loading}
-                  className="remove-pantry-button"
-                >
-                  ×
-                </button>
-              </motion.li>
-            ))}
-          </ul>
-        )}
-      </motion.div>
-      
-      <motion.div className="form-actions" variants={itemVariants}>
-        <button
-          type="submit"
-          className="submit-button"
-          disabled={loading}
+                ${preferences.budget}
+              </motion.span>
+            </motion.div>
+          </div>
+          <div className="budget-labels">
+            <span>$0</span>
+            <span>$25</span>
+            <span>$50</span>
+          </div>
+          <small>How much can you spend on food per week?</small>
+        </motion.div>
+        
+        <motion.div className="form-group pantry-items-group" variants={itemVariants}>
+          <label>Pantry Items (Optional)</label>
+          <div className="pantry-input-container">
+            <input
+              type="text"
+              value={pantryInput}
+              onChange={handlePantryInputChange}
+              placeholder="e.g., rice, soy sauce, olive oil"
+              disabled={loading}
+            />
+            <button
+              type="button"
+              onClick={addPantryItem}
+              disabled={!pantryInput.trim() || loading}
+              className="add-pantry-button"
+            >
+              Add
+            </button>
+          </div>
+          <small>What ingredients do you already have?</small>
+          
+          <AnimatePresence>
+            {preferences.pantryItems.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ul className="pantry-items-list">
+                  <AnimatePresence>
+                    {preferences.pantryItems.map((item, index) => (
+                      <motion.li 
+                        key={item + index}
+                        variants={pantryItemVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        className="pantry-item"
+                        layout
+                      >
+                        <span>{item}</span>
+                        <button
+                          type="button"
+                          onClick={() => removePantryItem(index)}
+                          disabled={loading}
+                          className="remove-pantry-button"
+                          aria-label={`Remove ${item}`}
+                        >
+                          ×
+                        </button>
+                      </motion.li>
+                    ))}
+                  </AnimatePresence>
+                </ul>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+        
+        <motion.div 
+          className="form-actions" 
+          variants={itemVariants}
+          whileHover={{ scale: 1.02 }}
         >
-          {loading ? (
-            <span className="loading-spinner"></span>
-          ) : (
-            'Save & Generate Recipes'
-          )}
-        </button>
-      </motion.div>
-    </motion.form>
+          <motion.button
+            type="submit"
+            className="submit-button"
+            disabled={loading}
+            whileTap={{ scale: 0.98 }}
+            initial={{ boxShadow: "0 4px 15px rgba(76, 44, 122, 0.4)" }}
+            whileHover={{ 
+              boxShadow: "0 8px 25px rgba(76, 44, 122, 0.6)",
+              y: -2
+            }}
+          >
+            {loading ? (
+              <span className="loading-spinner"></span>
+            ) : (
+              'Save & Generate Recipes'
+            )}
+          </motion.button>
+        </motion.div>
+      </motion.form>
+    </motion.div>
   );
 };
 

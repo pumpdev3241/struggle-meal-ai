@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import YouTube from 'react-youtube';
 import { fetchYouTubeVideos } from '../../services/aiService';
 import { toggleFavoriteRecipe } from '../../services/supabaseClient';
@@ -99,9 +99,30 @@ const RecipeCard = ({
       transition: { type: 'spring', stiffness: 300, damping: 24 }
     },
     hover: {
-      y: -5,
-      boxShadow: '0 10px 20px rgba(0, 0, 0, 0.1)',
+      scale: 1.02,
+      boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
       transition: { type: 'spring', stiffness: 300, damping: 24 }
+    }
+  };
+  
+  // Details animation variants
+  const detailsVariants = {
+    hidden: { opacity: 0, height: 0 },
+    visible: { 
+      opacity: 1, 
+      height: 'auto',
+      transition: { 
+        height: { type: 'spring', stiffness: 300, damping: 30 },
+        opacity: { duration: 0.2, delay: 0.1 }
+      }
+    },
+    exit: { 
+      opacity: 0, 
+      height: 0,
+      transition: { 
+        height: { type: 'spring', stiffness: 300, damping: 30 },
+        opacity: { duration: 0.2 }
+      }
     }
   };
   
@@ -111,31 +132,56 @@ const RecipeCard = ({
       variants={cardVariants}
       initial="hidden"
       animate="visible"
-      whileHover="hover"
-      onClick={toggleExpanded}
+      whileHover={!expanded ? "hover" : undefined}
+      layoutId={`recipe-card-${recipe.id}`}
     >
-      <div className="recipe-card-header">
-        <h3>{recipe.name}</h3>
+      <div className="recipe-card-image">
+        <div className="recipe-image-placeholder">
+          <span>{recipe.name.charAt(0)}</span>
+        </div>
+        {isSelected && (
+          <motion.div 
+            className="recipe-selected-badge"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 500, damping: 15 }}
+          >
+            <span>✓</span>
+          </motion.div>
+        )}
+      </div>
+      <motion.div 
+        className="recipe-card-header"
+        onClick={toggleExpanded}
+      >
+        <motion.h3 layoutId={`recipe-title-${recipe.id}`}>{recipe.name}</motion.h3>
         <div className="recipe-card-actions">
-          <button
+          <motion.button
             className={`favorite-button ${isFavorite ? 'favorited' : ''}`}
             onClick={handleFavoriteToggle}
             aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            whileHover={{ scale: 1.2 }}
+            whileTap={{ scale: 0.9 }}
           >
             {isFavorite ? '★' : '☆'}
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             className={`select-button ${isSelected ? 'selected' : ''}`}
             onClick={handleSelect}
             aria-label={isSelected ? 'Remove from meal plan' : 'Add to meal plan'}
+            whileHover={{ scale: 1.2 }}
+            whileTap={{ scale: 0.9 }}
           >
             {isSelected ? '✓' : '+'}
-          </button>
+          </motion.button>
         </div>
-      </div>
+      </motion.div>
       
-      <div className="recipe-card-info">
-        <div className="recipe-card-meta">
+      <motion.div 
+        className="recipe-card-info"
+        onClick={toggleExpanded}
+      >
+        <motion.div className="recipe-card-meta" layoutId={`recipe-meta-${recipe.id}`}>
           <span className="prep-time">
             <i className="icon-clock"></i> {recipe.prepTime}
           </span>
@@ -145,62 +191,120 @@ const RecipeCard = ({
           <span className="servings">
             <i className="icon-user"></i> {recipe.servings} {recipe.servings === 1 ? 'serving' : 'servings'}
           </span>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
       
-      {expanded && (
-        <div className="recipe-card-details">
-          <div className="recipe-ingredients">
-            <h4>Ingredients</h4>
-            <ul>
-              {recipe.ingredients.map((ingredient, index) => (
-                <li key={index}>
-                  <span className="ingredient-amount">{ingredient.amount}</span>
-                  <span className="ingredient-name">{ingredient.name}</span>
-                  <span className="ingredient-cost">${ingredient.cost.toFixed(2)}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="recipe-total-cost">
-              <span>Total Cost: ${recipe.totalCost.toFixed(2)}</span>
+      <AnimatePresence>
+        {expanded && (
+          <motion.div 
+            className="recipe-card-details"
+            variants={detailsVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            layout
+          >
+            <div className="recipe-ingredients">
+              <motion.h4 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                Ingredients
+              </motion.h4>
+              <motion.ul
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                {recipe.ingredients.map((ingredient, index) => (
+                  <motion.li 
+                    key={index}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 + index * 0.05 }}
+                  >
+                    <span className="ingredient-amount">{ingredient.amount}</span>
+                    <span className="ingredient-name">{ingredient.name}</span>
+                    <span className="ingredient-cost">${ingredient.cost.toFixed(2)}</span>
+                  </motion.li>
+                ))}
+              </motion.ul>
+              <motion.div 
+                className="recipe-total-cost"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                <span>Total Cost: ${recipe.totalCost.toFixed(2)}</span>
+              </motion.div>
             </div>
-          </div>
-          
-          <div className="recipe-instructions">
-            <h4>Instructions</h4>
-            <ol>
-              {recipe.instructions.map((step, index) => (
-                <li key={index}>{step}</li>
-              ))}
-            </ol>
-          </div>
-          
-          {youtubeVideo && (
-            <div className="recipe-video">
-              <h4>Video Tutorial</h4>
-              <YouTube videoId={youtubeVideo.id} opts={youtubeOpts} />
-              <p className="video-title">{youtubeVideo.title}</p>
+            
+            <div className="recipe-instructions">
+              <motion.h4
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                Instructions
+              </motion.h4>
+              <motion.ol
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                {recipe.instructions.map((step, index) => (
+                  <motion.li 
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 + index * 0.05 }}
+                  >
+                    {step}
+                  </motion.li>
+                ))}
+              </motion.ol>
             </div>
-          )}
-          
-          {loading && (
-            <div className="loading-spinner-container">
-              <span className="loading-spinner"></span>
-              <p>Loading video tutorial...</p>
-            </div>
-          )}
-        </div>
-      )}
+            
+            {youtubeVideo && (
+              <motion.div 
+                className="recipe-video"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+              >
+                <h4>Video Tutorial</h4>
+                <div className="video-container">
+                  <YouTube videoId={youtubeVideo.id} opts={youtubeOpts} />
+                </div>
+                <p className="video-title">{youtubeVideo.title}</p>
+              </motion.div>
+            )}
+            
+            {loading && (
+              <div className="loading-spinner-container">
+                <span className="loading-spinner"></span>
+                <p>Loading video tutorial...</p>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
       
-      <div className="recipe-card-footer">
-        <button 
+      <motion.div 
+        className="recipe-card-footer"
+        layout
+      >
+        <motion.button 
           className="expand-button"
           onClick={toggleExpanded}
           aria-label={expanded ? 'Show less' : 'Show more'}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
           {expanded ? 'Show Less' : 'Show More'}
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
     </motion.div>
   );
 };

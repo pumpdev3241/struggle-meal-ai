@@ -152,8 +152,22 @@ const RecipeList = ({
     visible: { 
       opacity: 1,
       transition: { 
-        staggerChildren: 0.1,
+        staggerChildren: 0.15,
         delayChildren: 0.2
+      }
+    }
+  };
+  
+  // Card animation variants
+  const cardVariants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        type: "spring", 
+        stiffness: 100, 
+        damping: 15 
       }
     }
   };
@@ -229,21 +243,30 @@ const RecipeList = ({
       {/* Recipe list */}
       {filteredAndSortedRecipes.length > 0 ? (
         <motion.div 
-          className="recipe-list"
+          className="recipe-grid"
           variants={listVariants}
           initial="hidden"
           animate="visible"
         >
           {filteredAndSortedRecipes.map(recipe => (
-            <RecipeCard
+            <motion.div
               key={recipe.id}
-              recipe={recipe}
-              isFavorite={favoriteIds.has(recipe.id)}
-              userId={userId}
-              onFavoriteToggle={handleFavoriteToggle}
-              onSelect={handleRecipeSelect}
-              isSelected={selectedRecipes.includes(recipe.id)}
-            />
+              className="recipe-card-wrapper"
+              variants={cardVariants}
+              whileHover={{ 
+                y: -10, 
+                transition: { type: "spring", stiffness: 300, damping: 20 } 
+              }}
+            >
+              <RecipeCard
+                recipe={recipe}
+                isFavorite={favoriteIds.has(recipe.id)}
+                userId={userId}
+                onFavoriteToggle={handleFavoriteToggle}
+                onSelect={handleRecipeSelect}
+                isSelected={selectedRecipes.includes(recipe.id)}
+              />
+            </motion.div>
           ))}
         </motion.div>
       ) : (

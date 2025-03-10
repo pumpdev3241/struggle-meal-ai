@@ -217,32 +217,13 @@ function App() {
         onLogoutSuccess={handleLogoutSuccess}
         darkMode={darkMode}
         onDarkModeToggle={toggleDarkMode}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        hasRecipes={recipes.length > 0}
+        hasSelectedRecipes={selectedRecipes.length > 0}
       />
       
       <main className="main-content">
-        {/* Tab navigation */}
-        <div className="tab-navigation">
-          <button
-            className={`tab-button ${activeTab === 'preferences' ? 'active' : ''}`}
-            onClick={() => setActiveTab('preferences')}
-          >
-            Preferences
-          </button>
-          <button
-            className={`tab-button ${activeTab === 'recipes' ? 'active' : ''}`}
-            onClick={() => setActiveTab('recipes')}
-            disabled={recipes.length === 0}
-          >
-            Recipes
-          </button>
-          <button
-            className={`tab-button ${activeTab === 'shopping-list' ? 'active' : ''}`}
-            onClick={() => setActiveTab('shopping-list')}
-            disabled={selectedRecipes.length === 0}
-          >
-            Shopping List
-          </button>
-        </div>
         
         {/* Loading and error states */}
         {loading && (
